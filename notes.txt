@@ -1,0 +1,50 @@
+website : playwright.dev
+
+playwright installation:
+1.install using commands:
+ 1. create a new folder and open in VS code
+ 2. go to terminal run command : npm init playwright@latest
+ 3. npx playwright -v ==> checks version 
+ 4. npx playwright --help
+2.install using vs code extension:
+
+
+
+playwright commands :
+
+npx playwright test ==> run all test files
+npx playwright test --workers 3 ==> runs with 3 workers(chromium, firefox and webkit browsers) in parallel
+npx playwright test one.spec.js ==> run specified test file
+npx playwright test one.spec.js two.spec.js ==> run specified test files
+npx playwright test one two ==> runs files that have one or two in the file name 
+npx playwright test -g "check title" ==> runs test with the title
+npx playwright test --project=chromium ==> runs on specific browser
+npx playwright test --headed ==> runs tests in headed mode
+npx playwright test --debug ==> debug tests
+npx playwright test example.spec.js --debug ==> specific test file
+npx playwright test example.spec.js:21 --debug ==> debug starting from specific line where test (.. starts)
+
+
+// playwright comes with tool called Codegen also called Test Generator
+// can be used to record test and generate test scripts
+
+Codegen opens two windows when running
+1. A browser window to interacts with the website
+2. Playwright Inspector window to record test
+
+Step 1 - Open terminal and run Codegen 
+command: npx playwright codegen
+
+npx playwright codegen google.com ==> open specific website
+npx playwright codegen --browser firefox(or chromium) ==> record on specific browser
+npx playwright codegen --target javascript -o record_example.js ==> record and save to a file
+
+
+
+
+
+
+
+
+
+
