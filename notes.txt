@@ -38,8 +38,34 @@ command: npx playwright codegen
 npx playwright codegen google.com ==> open specific website
 npx playwright codegen --browser firefox(or chromium) ==> record on specific browser
 npx playwright codegen --target javascript -o record_example.js ==> record and save to a file
+npx playwright codegen --viewport-size=800,600 ==> set viewport - screen resolution (size)
+npx playwright codegen --device="iPhone 11" ==> Emulate devices
+npx playwright codegen --color-scheme=dark ==> Emulate color scheme
+npx playwright codegen --help ==> See all options
+
+Trace Viewer:
+Trace Viewer Options:
+'on-first-retry' - Record a trace only when retrying a test for the first time.
+'off' - Do not record trace.
+'on' - Record a trace for each test. (not recommended as it's performance heavy)
+'retain-on-failure' - Record a trace for each test, but remove it from successful test runs
+
+To set trace on from command: npx playwright test --trace on
+
+Ways to view trace:
+Using command - npx playwright show-trace trace.zip
+Using HTML Report
+Using utility - https://trace.playwright.dev/(drag and drop trace zip file to view trace)
 
 
+Set trace programmatically:
+code:
+  test.only('test demo', async ({page, context}) => {
+    await context.tracing.start({snapshots:true, screenshots: true})
+
+    // test code
+    await context.tracing.stop({path:'test-trace.zip'})
+  });
 
 
 
