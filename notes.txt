@@ -44,13 +44,19 @@ npx playwright codegen --color-scheme=dark ==> Emulate color scheme
 npx playwright codegen --help ==> See all options
 
 Trace Viewer:
+
 Trace Viewer Options:
 'on-first-retry' - Record a trace only when retrying a test for the first time.
 'off' - Do not record trace.
 'on' - Record a trace for each test. (not recommended as it's performance heavy)
 'retain-on-failure' - Record a trace for each test, but remove it from successful test runs
 
-To set trace on from command: npx playwright test --trace on
+To set trace on from command: 
+   1. npx playwright test --trace on
+   2. npx playwright test --trace off
+   3. npx playwright test --trace on-first-retry
+   4. npx playwright test --trace retain-on-failure
+
 
 Ways to view trace:
 Using command - npx playwright show-trace trace.zip
@@ -68,9 +74,265 @@ code:
   });
 
 
+  playwright.config.ts:
+
+  // to set timeout to 10 seconds 
+    timeout: 10 * 1000,
+  expect: {
+    // Maximum time expect() should wait for the condition to be met .
+    // For example in `await expect(locator).toHaveText();`
+    timeout: 5000,
+  },
+
+  // set retries to 1 => it produce trace when test failure
+  retries: 1,
+
+
+  hooks:
+  1.beforeAll
+  2.afterAll
+  3. afterEach
+  4. beforeEach
+
+  code example:
+   let context
+   let page
+   test.beforeAll(async ({browser}) => {
+    context = await browser.newContext()
+    await context.tracing.start({screenshots: true, snapshots: true})
+    page = await context.newPage()
+   })
+
+   code in file:
+   let context
+   let page
+   test.beforeAll(async ({browser}) => {
+    context 
+    await context.tracing.start({
+      screenshots: true, 
+      snapshots: true
+      })
+      page = (await context).newPage();
+   })
+
+   test.afterAll(async () => {
+    await context.tracing.stop({path: 'test2_trace.zip'})
+   } )
+
+   test('has title', async ({}) => {
+  await page.goto('https://playwright.dev/');
+
+  // Expect a title "to contain" a substring.
+  await expect(page).toHaveTitle(/Playwright/);
+});
 
 
 
+test tags:
 
+You can tag tests by providing additional test details. Alternatively, you can include tags in the test title. Note that each tag must start with @ symbol.
+
+code :
+test('basic test', {
+  tag: '@smoke',      // uses tag
+}, async ({ page }) => {
+  await page.goto('https://playwright.dev/');
+  // ...
+});
+
+
+annotations:
+
+
+test.describe('two annotated tests', {
+  annotation: {
+    type: 'issue',
+    description: 'https://github.com/microsoft/playwright/issues/23180',
+  },
+}, () => {
+  test('one', async ({ page }) => {
+    // ...
+  });
+
+  test('two', async ({ page }) => {
+    // ...
+  });
+});
+
+
+
+afterEach:
+test.afterEach(async ({ page }) => {
+  console.log(`Finished ${test.info().title} with status ${test.info().status}`);
+
+  if (test.info().status !== test.info().expectedStatus)
+    console.log(`Did not run as expected, ended up at ${page.url()}`);
+});
+
+
+
+selectors:
+different selectors by id, name , text , expect
+
+assertions:
+expect(page).toBe()
+expect(page).not.toBe()
+
+soft assertions:
+expect.soft(page).toBe()
+
+if assertions fails next line of code will not run,
+to overcome this issue soft assertions are used to run next line of code
+
+
+run tests in slow motion:
+
+const config = {
+  use: {
+    video:'on',
+    launchOptions: {
+      slowMo: 1000
+    }
+      }
+}
+
+slowMo slows down playwright operations by the specified milliseconds
+
+video:
+'on' - Record video for each test
+'off' - Do not record video
+'retain-on-failure' - Record for each test, but remove from successful test runs
+'on-first-retry' - Record only when retrying a test for the first time
+
+
+code : 
+
+test("Slow motion and Video recording demo", async () => {
+  const browser = await chromium.launch({
+    slowMo: 500,
+    headless: false,
+  });
+
+  const context = await browser.newContext({
+    recordVideo: {
+      dir: "videos/",
+      size: { width: 800, height: 600 },
+    },
+  });
+
+  const page = await context.newPage();
+
+  await page.goto("https://www.saucedemo.com/");
+
+});
+
+
+HooksAnd Group:
+test.describe
+
+afterAll, afterEach, beforeAll, beforeEach
+
+Annotations: 
+
+skip -> skip test
+fail -> mark test as failure will show error if the test does not fail
+fixme -> test will be aborted 
+slow -> mark the test as slow and triples the test timeout
+only -> run specific tests
+
+skip conditionally :
+code : 
+test('skip this test', async ({ page, browserName }) => {
+  test.skip(browserName === 'firefox', 'Still working on it');
+});
+
+
+
+tags:
+@smoke, @sanity, @fast, @slow
+
+the above tag can be any word but should start with @
+
+test('Test full report @smoke', async({page}) => {
+  //....
+})
+
+run only tests that have certain tag 
+npx playwright test example.spec.ts --grep "@smoke"
+
+Opposite of grep - Skip tests with certain tag
+npx playwright test --grep-invert "@smoke"
+
+
+logical or:
+npx playwright test --grep "@fast|@slow"
+
+logical and: 
+npx playwright test --grep "(?=.*@fast)(?=.*@slow)"
+
+Page object model:
+open new folder in vs code 
+npm init -y
+
+
+API TESTING:
+
+npx playwright test --ui  --> open trace ui
+
+
+STATE MANAGEMENT:
+
+manage state of a page by storing necessary cookies, local & session storage 
+
+code: 
+
+// stores login state in a file
+let setAuthState = async (browser, url, loginConfig) => {
+    let context = await browser.newContext();
+    let page = await context.newPage(devices['Desktop Chrome']);
+    await page.goto(url);
+    await page.locator(`//button[.='Continue']`).click();
+    await page.getByRole('link', { name: 'Log In' }).click();
+    await page.locator(`[name='email']`).fill(loginConfig.userName);
+    await page.locator(`[name='password']`).fill(loginConfig.password);
+    await page.locator('form button').click();
+    await expect(page.getByText('5v1988')).toBeVisible({ timeout: 999});
+    await context.storageState({path:`state/${loginConfig.type}.json`});
+    await context.close();
+}
+
+
+// reusing stored state in local when creating new context 
+test('Login as basic user', async () => {
+        let userType = config.users.find(user => user.type === 'basic').type;
+        let newContext = await browser.newContext({ storageState: `state/${userType}.json` });
+        let newPwPage = await newContext.newPage();
+        await newPwPage.goto(config.url);
+        await expect(newPwPage.getByText('5v1988')).toBeVisible({ timeout: 5000 });
+        await newContext.close();
+}, timeOut.halfSecond);
+
+
+
+// for multiple user types:
+
+const stateConfig = {
+    url: 'https://giphy.com',
+    users: [
+        {
+            type: 'basic',
+            userName: 'basic.user@gmail.com',
+            password: '**********'
+        },
+        {
+            type: 'premium',
+            userName: 'premium.user@gmail.com',
+            password: '**********'
+        }
+    ]
+}
+
+ 
+// https://5v1988.medium.com/useful-state-management-playwright-39c42ddb06e6 
 
 
